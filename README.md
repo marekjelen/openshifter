@@ -17,7 +17,7 @@ The file name will be the prefix of the DNS name for your cluster.
 1. Execute openshifter
 
    ```
-   docker run -ti -v ~/deployer:/root/data registry.gitlab.com/osevg/openshifter create/destroy/cleanup cluster01
+   docker run -ti -v ~/deployer:/root/data docker.io/mjelen/openshifter create/destroy/cleanup cluster01
    ```
 
    > To be able to pull down the openshifter image from gitlab you need to be in the osevg organization, and you'll be required to execute __docker login registry.gitlab.com__ with your gitlab credentials.

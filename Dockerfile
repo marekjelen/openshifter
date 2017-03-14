@@ -11,8 +11,8 @@ RUN yum install -y git ansible openssh python-cryptography pyOpenSSL libselinux-
 
 WORKDIR /root
 
-RUN git clone https://github.com/openshift/openshift-ansible.git
-RUN cd openshift-ansible && git checkout release-1.4 && cd ..
+RUN git clone https://github.com/openshift/openshift-ansible.git && \
+    cd openshift-ansible && git checkout release-1.4 && cd ..
 
 ENV OPENSHIFT_ANSIBLE=/root/openshift-ansible
 

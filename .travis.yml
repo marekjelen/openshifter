@@ -1,0 +1,21 @@
+env:
+  global:
+  - secure: YphlmvpBWR97kUZUmVt11q8FXruTitAlhvAQEj+WiztwkooipKWISgEgy9f6HZVy9lZNu3HI4goLeqYzdc8dWThzPxwsC6KmAtFp4xcqD+pweYi3S8Gfq8jIv+dNnKTuDpl8PbaICrJlmxB15PEvf2YNSWdnJRI76ocKj8adKGQ/y2Ebc6dD2LymkqJMb7cjmX113p46XMCqQU9gVv+D5bWXCenPusmd2EidBsYIebLFqmqIlfghKLt9jbTxNzq9F88HYtLLMiBvvg73McQ9WV0fnaNdY9M1IGqki8xfTZJ5LdOv860/o8pvy5fRNirJksLFvCKoTN9XMqncYcj9aHLhwForWytuG/sIGthpkCY4sHktKdSrcQEvzq8x/i3d3xG6/AC9zqA8GX5lALLwSPw6zvgbpxjOSJaNe/UGf5wAiKuXr79SEXn7euZvubk1vcSj6o3w+vqAIAo+WYuYtL1IiTduwsr12axv8c19oTxeqKLrORdTLnVmv2SiQm8WH1X4EDuybqfjRWFtDbOmV/qgZjhG7hz7e9jweov5bhrjG+CHz0jQJgQDsiNrry5o5vO4lxu0RZVdILauybBdZZ9qfkqPCZBsCDLRBZUD8woV74YVuXSwK2TTdDN6l2o2XUqLN4GfdQHn3/i36IHYq9qzdo3B0INIffRWLB1V4uk=
+  - secure: nYtLQjPKj3ECkNvppLRX/55668pSBuEF6FhhwfJ85yWMfW5c+YMBB+yitgYKa5fvztIanPFRfZeUawrDnBqLz5guO7rzGHUJFPg1njLpNxD52vUQMtzSvBDCeh2jQxuy1KJ+r2XP3zZ1JZzlG6ooeVNV4b7VSdQwMYwl+tG7DG6gGObca5dZazB6Wx0Fl3Xm3V/ikb5W/NmdA8bvOVpRw+iWV6KbOoX/ZeFW7czTOIIu4DjvPGtXzY0GUgQ+eqQLv3pNBV1QQML2mtva31AiduDJWm1xeAMO0V1HvtUzDsG0IjwhxEvy8PYHbincTrxSCwY4RkUQfAQjffB9Wwpw+MLeJQ0FDwJ0KlyFMGD77Qr3OZX5FhhQ+hMX4I5mqaSz1vj7pj6NtIvfL2kYLEv8ROgPhwLAUalAg7Kp2b0Gl1RsR30HpPO+p1Wv3YKbmCLSzo+abFc7ArJV3UZOwiyHQD3esgked0Mz2RxOvDOUcHHC4oHCZHKod9DmranupDcD/zQXYExHZOx4yw2A3XafSbG7YzuH8jlMeizWIh9fxlfSssMNE6vQUpx2+B7TSgwC/8COpDTNWcMx3bC+xkpb98OE6oWxPj/YCWasbGw9Yuqk9lloRN4yprjD6XFe0PCc4pImpuiU5T/1fNXRvhF9kcJS0ofHKANzHYmAwAFv59E=
+
+language: java
+
+jdk:
+- oraclejdk8
+
+sudo: required
+
+services:
+- docker
+
+after_success:
+- docker login -u $DOCKER_USER -p $DOCKER_PASS
+- export REPO=mjelen/openshifter
+- export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH; fi`
+- docker build -f Dockerfile -t $REPO:$TAG .
+- docker push $REPO

@@ -5,6 +5,8 @@ env:
 
 language: java
 
+script: mvn -P release clean package
+
 jdk:
 - oraclejdk8
 

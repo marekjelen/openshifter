@@ -1,7 +1,9 @@
 package eu.mjelen.openshifter.cli;
 
+import eu.mjelen.openshifter.ClusterMapBuilder;
 import eu.mjelen.openshifter.api.Deployment;
 import eu.mjelen.warden.Warden;
+import eu.mjelen.warden.api.cluster.map.ClusterMap;
 import eu.mjelen.warden.templates.Templates;
 import eu.mjelen.warden.api.server.Connection;
 import eu.mjelen.warden.api.server.ExecResult;
@@ -10,7 +12,6 @@ import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 
 import java.io.File;
-import java.security.Security;
 import java.util.List;
 
 public class Main {
@@ -43,7 +44,9 @@ public class Main {
             this.warden.getDescriptor().setName(this.arguments.getName());
         }
 
-        this.warden.validateCluster();
+        ClusterMap clusterMap = new ClusterMapBuilder(this.warden.getDescriptor()).build();
+
+        this.warden.validateCluster(clusterMap);
 
         if("create".equals(this.arguments.getAction())) {
             if(!this.arguments.hasFlag("skip_infrastructure")) {

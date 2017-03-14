@@ -14,7 +14,7 @@ public class Deployment implements Descriptor {
     private String name;
     private String type = "origin";
     private String release = "v1.4.0";
-    private String domain;
+    private Dns dns = new Dns();
     private Map<String, Boolean> components = new HashMap<>();
     private List<String> templates = Collections.emptyList();
     private List<String> execute = Collections.emptyList();
@@ -70,12 +70,12 @@ public class Deployment implements Descriptor {
         this.release = release;
     }
 
-    public String getDomain() {
-        return domain;
+    public Dns getDns() {
+        return dns;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setDns(Dns dns) {
+        this.dns = dns;
     }
 
     public Map<String, Boolean> getComponents() {

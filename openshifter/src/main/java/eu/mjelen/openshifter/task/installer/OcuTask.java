@@ -39,8 +39,8 @@ public class OcuTask {
 
         params += "--version=" + deployment.getRelease() + " ";
 
-        if(deployment.getDomain() != null) {
-            String suffix = deployment.getName() + "." + deployment.getDomain();
+        if(deployment.getDns().getSuffix() != null) {
+            String suffix = deployment.getName() + "." + deployment.getDns().getSuffix();
             params += "--public-hostname=console." + suffix + " --routing-suffix=apps." + suffix + " ";
         }
 

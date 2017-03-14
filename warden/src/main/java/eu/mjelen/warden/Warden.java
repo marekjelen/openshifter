@@ -2,12 +2,12 @@ package eu.mjelen.warden;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import eu.mjelen.warden.api.Context;
 import eu.mjelen.warden.api.ContextBuilder;
 import eu.mjelen.warden.api.Descriptor;
 import eu.mjelen.warden.api.annotation.Task;
 import eu.mjelen.warden.api.cluster.Cluster;
 import eu.mjelen.warden.api.cluster.ClusterProvider;
+import eu.mjelen.warden.api.cluster.map.ClusterMap;
 import eu.mjelen.warden.handler.RootTask;
 import eu.mjelen.warden.handler.TaskHandler;
 import eu.mjelen.warden.provider.ProviderHolder;
@@ -77,10 +77,10 @@ public class Warden<A extends Descriptor> {
         return cluster;
     }
 
-    public void validateCluster() {
+    public void validateCluster(ClusterMap map) {
         this.logger.debug("Generating cluster map for provider");
 
-        this.cluster = this.getProvider(this.descriptor.getProvider()).analyze(this.descriptor);
+        this.cluster = this.getProvider(this.descriptor.getProvider()).analyze(map, this.descriptor);
         if(this.cluster == null) throw new NullPointerException("Cluster map can not be null");
 
         this.cluster.validate();

@@ -3,6 +3,7 @@ package eu.mjelen.warden.provider;
 import eu.mjelen.warden.api.annotation.Provider;
 import eu.mjelen.warden.api.cluster.Cluster;
 import eu.mjelen.warden.api.cluster.ClusterProvider;
+import eu.mjelen.warden.api.cluster.map.ClusterMap;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,7 @@ public class ProviderHolder<A> implements ClusterProvider<A> {
     }
 
     @Override
-    public Cluster analyze(A descriptor) {
-        return this.provider.analyze(descriptor);
+    public Cluster analyze(ClusterMap map, A descriptor) {
+        return this.provider.analyze(map, descriptor);
     }
 }

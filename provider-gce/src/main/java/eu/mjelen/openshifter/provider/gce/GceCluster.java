@@ -5,12 +5,12 @@ import eu.mjelen.openshifter.api.Deployment;
 import eu.mjelen.warden.api.cluster.Cluster;
 import eu.mjelen.warden.api.cluster.Instance;
 import eu.mjelen.openshifter.provider.gce.components.*;
+import eu.mjelen.warden.api.cluster.map.ClusterMap;
+import eu.mjelen.warden.api.cluster.map.IpAddress;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
@@ -18,22 +18,21 @@ public class GceCluster implements Cluster {
 
     private final Deployment deployment;
     private final Project project;
-    private final String name;
-    private final Region region;
-    private final Zone zone;
 
     private final List<GceComponent> components = new LinkedList<>();
-    private final PrivateNetwork network;
-    private final List<PersistentDisk> disks = new LinkedList<>();
+    private PrivateNetwork network;
     private final List<Machine> nodes = new LinkedList<>();
-    private final Machine master;
-    private Machine infra;
 
     private GceClient client;
 
-    private String sourceImage;
+    private Map<String, String> sourceImages = new HashMap<>();
 
-    public GceCluster(Deployment deployment) {
+    {
+        sourceImages.put("centos-7", "projects/centos-cloud/global/images/family/centos-7");
+        sourceImages.put("rhel-7", "projects/rhel-cloud/global/images/family/rhel-7");
+    }
+
+    public GceCluster(ClusterMap map, Deployment deployment) {
         this.deployment = deployment;
 
         try {
@@ -42,239 +41,100 @@ public class GceCluster implements Cluster {
             e.printStackTrace();
         }
 
-        this.name = this.deployment.getName();
-        this.region = new Region(this.deployment.getGce().getRegion());
-        this.zone = new Zone(this.region, this.deployment.getGce().getZone());
-
         this.project = new Project(this.deployment.getGce().getProject());
 
-        this.network = new PrivateNetwork(this.name);
-        this.network.setProject(this.project);
+        map.getNetworks().forEach(ntwrk -> {
+            this.network = new PrivateNetwork(ntwrk.getName());
+            this.network.setProject(this.project);
+            this.components.add(network);
 
-        this.components.add(network);
+            ntwrk.getFirewalls().forEach(frwl -> {
+                frwl.getFirewallRules().forEach(frwlr -> {
+                    FirewallRule rule = new FirewallRule(frwlr.getName());
+                    this.network.addFirewallRule(rule);
+                    this.components.add(rule);
+                    rule.setProject(getProject());
+                    frwlr.getSourceRanges().forEach(rule::addSourceRange);
+                    frwlr.getTargetTags().forEach(rule::addTargetTag);
+                    frwlr.getAllow().forEach(allow -> {
+                        if(allow.contains("/")) {
+                            String[] segments = allow.split("/");
+                            rule.allow(segments[0], segments[1].split(","));
+                        } else {
+                            rule.allow(allow);
+                        }
 
-        FirewallRule rule;
-
-        rule = new FirewallRule(this.name +  "-all");
-        this.network.addFirewallRule(rule);
-        this.components.add(rule);
-        rule.setProject(getProject());
-        rule.allow("tcp", new String[] { "22"});
-
-        rule = new FirewallRule(this.name + "-internal");
-        this.network.addFirewallRule(rule);
-        this.components.add(rule);
-        rule.setProject(getProject());
-        rule.addSourceRange("10.128.0.0/9");
-        rule.allow("icmp");
-        rule.allow("tcp", new String[] { "0-65535" });
-        rule.allow("udp", new String[] { "0-65535" });
-
-        rule = new FirewallRule(this.name + "-master");
-        this.network.addFirewallRule(rule);
-        this.components.add(rule);
-        rule.setProject(getProject());
-        rule.addTargetTag("master");
-        rule.allow("tcp", new String[] { "8443" });
-
-        rule = new FirewallRule(this.name + "-infra");
-        this.network.addFirewallRule(rule);
-        this.components.add(rule);
-        rule.setProject(getProject());
-        rule.addTargetTag("infra");
-        if(this.deployment.getComponents().getOrDefault("nodePorts", false)) {
-            rule.allow("tcp", new String[]{"80", "443", "30000-32767"});
-        } else {
-            rule.allow("tcp", new String[]{"80", "443"});
-        }
-
-        String suffix = "." + this.deployment.getName() + "." + this.deployment.getDomain() + ".";
-
-        String type = this.deployment.getGce().getMachine();
-
-        this.sourceImage = "projects/centos-cloud/global/images/family/centos-7";
-
-        if("ocp".equals(this.deployment.getType())) {
-            this.sourceImage = "projects/rhel-cloud/global/images/family/rhel-7";
-        }
-
-        PersistentDisk pvsDisk = null;
-
-        IPAddress address;
-
-        address = new IPAddress(this.name + "-master", getZone());
-        address.setProject(this.project);
-        this.components.add(address);
-
-        if(this.deployment.getComponents().getOrDefault("pvs", false)) {
-            pvsDisk = new PersistentDisk(this.name + "-pvs", this.zone);
-            this.components.add(pvsDisk);
-            this.disks.add(pvsDisk);
-            pvsDisk.setProject(this.project);
-            pvsDisk.setSize(this.deployment.getDisks().getPvs());
-        }
-
-        {
-            PersistentDisk rootDisk = new PersistentDisk(this.name + "-master-root", this.zone);
-            this.components.add(rootDisk);
-            this.disks.add(rootDisk);
-            rootDisk.setProject(this.project);
-            rootDisk.setSource(this.sourceImage);
-            rootDisk.setBoot(true);
-            rootDisk.setSize(this.deployment.getDisks().getRoot());
-
-            PersistentDisk dockerDisk = new PersistentDisk(this.name + "-master-docker", this.zone);
-            this.components.add(dockerDisk);
-            this.disks.add(dockerDisk);
-            dockerDisk.setProject(this.project);
-            dockerDisk.setSize(this.deployment.getDisks().getDocker());
-
-            Machine master = new Machine(this.name + "-master", type, this.zone, this.network);
-            this.components.add(master);
-            this.master = master;
-            master.setProject(this.project);
-            master.addTag("master");
-            master.addDisk(rootDisk);
-            master.addDisk(dockerDisk);
-            master.setIPAddress(address);
-
-            this.deployment.getSsh().getKeys().forEach(key -> {
-                master.addSshKey(new SshKey("openshift", key));
-            });
-
-            if (!this.deployment.getNodes().getInfra()) {
-                this.infra = master;
-                master.addTag("infra");
-                master.addTag("node");
-                this.nodes.add(master);
-                if(this.deployment.getComponents().getOrDefault("pvs", false)) {
-                    master.addDisk(pvsDisk);
-                }
-            }
-        }
-
-        if(this.deployment.getNodes().getInfra()) {
-            address = new IPAddress(this.name + "-infra", getZone());
-            address.setProject(this.project);
-            this.components.add(address);
-
-            PersistentDisk rootDisk = new PersistentDisk(this.name + "-infra-root", this.zone);
-            this.disks.add(rootDisk);
-            this.components.add(rootDisk);
-            rootDisk.setProject(this.project);
-            rootDisk.setSource(this.sourceImage);
-            rootDisk.setBoot(true);
-            rootDisk.setSize(this.deployment.getDisks().getRoot());
-
-            PersistentDisk dockerDisk = new PersistentDisk(this.name + "-infra-docker", this.zone);
-            this.components.add(dockerDisk);
-            this.disks.add(dockerDisk);
-            dockerDisk.setProject(this.project);
-            dockerDisk.setSize(this.deployment.getDisks().getDocker());
-
-            Machine infra = new Machine(this.name + "-infra", type, this.zone, this.network);
-            this.components.add(infra);
-            this.infra = infra;
-            this.nodes.add(infra);
-            infra.setProject(this.project);
-            infra.addTag("infra");
-            infra.addTag("node");
-            infra.addDisk(rootDisk);
-            infra.addDisk(dockerDisk);
-            infra.setIPAddress(address);
-
-            if(this.deployment.getComponents().get("pvs")) {
-                infra.addDisk(pvsDisk);
-            }
-
-            this.deployment.getSsh().getKeys().forEach(key -> {
-                infra.addSshKey(new SshKey("openshift", key));
-            });
-        }
-
-        if(this.deployment.getNodes().getCount() > 0) {
-            LongStream.rangeClosed(1, this.deployment.getNodes().getCount()).forEach(id -> {
-                String name = this.name + "-node-" + id;
-
-                IPAddress addr = new IPAddress(name, getZone());
-                addr.setProject(this.project);
-                this.components.add(addr);
-
-                PersistentDisk rootDisk = new PersistentDisk(name + "-root", this.zone);
-                this.disks.add(rootDisk);
-                this.components.add(rootDisk);
-                rootDisk.setProject(this.project);
-                rootDisk.setSource(this.sourceImage);
-                rootDisk.setBoot(true);
-                rootDisk.setSize(this.deployment.getDisks().getRoot());
-
-                PersistentDisk dockerDisk = new PersistentDisk(name + "-docker", this.zone);
-                this.disks.add(dockerDisk);
-                this.components.add(dockerDisk);
-                dockerDisk.setProject(this.project);
-                dockerDisk.setSize(this.deployment.getDisks().getDocker());
-
-                Machine node = new Machine(name, type, this.zone, this.network);
-                this.nodes.add(node);
-                this.components.add(node);
-                node.setProject(this.project);
-                node.addTag("node");
-                node.addDisk(rootDisk);
-                node.addDisk(dockerDisk);
-                node.setIPAddress(addr);
-
-                this.deployment.getSsh().getKeys().forEach(key -> {
-                    node.addSshKey(new SshKey("openshift", key));
+                    });
                 });
             });
-        }
+        });
 
-        DomainName domainName;
-        domainName = new DomainName();
-        this.components.add(domainName);
-        domainName.setProject(this.project);
-        domainName.setZone(this.deployment.getGce().getDns());
-        domainName.setTtl(300);
-        domainName.setType("A");
-        domainName.setMachine(this.master);
-        domainName.setName("console" + suffix);
+        map.getMachines().forEach(mchn -> {
+            Region region;
 
-        domainName = new DomainName();
-        this.components.add(domainName);
-        domainName.setProject(this.project);
-        domainName.setZone(this.deployment.getGce().getDns());
-        domainName.setTtl(300);
-        domainName.setType("A");
-        domainName.setMachine(this.infra);
-        domainName.setName("*.apps" + suffix);
-    }
+            if(mchn.getZone().getRegion() == null || mchn.getZone().getRegion().getName() == null) {
+                String[] segment = mchn.getZone().getName().split("-");
+                region = new Region(segment[0] + "-" + segment[1]);
+            } else {
+                region = new Region(mchn.getZone().getRegion().getName());
+            }
 
-    public String getName() {
-        return name;
-    }
+            Zone zone = new Zone(region, mchn.getZone().getName());
 
-    public Region getRegion() {
-        return region;
-    }
+            IPAddress address = null;
 
-    public Zone getZone() {
-        return zone;
-    }
+            for(IpAddress addr : mchn.getAddresses()) {
+                address = new IPAddress(addr.getName(), zone);
+                address.setProject(this.project);
+                this.components.add(address);
+            }
 
-    public PrivateNetwork getNetwork() {
-        return network;
-    }
+            Machine machine = new Machine(mchn.getName(), mchn.getType(), zone, this.network);
+            machine.setProject(this.project);
+            mchn.getTags().forEach(machine::addTag);
+            if(address != null) {
+                machine.setIPAddress(address);
+            }
 
-    public List<PersistentDisk> getDisks() {
-        return disks;
+            mchn.getDisks().forEach(dsk -> {
+                PersistentDisk disk = new PersistentDisk(dsk.getName(), zone);
+                this.components.add(disk);
+                disk.setProject(this.project);
+                if(dsk.getSource() != null) {
+                    disk.setSource(this.sourceImages.get(dsk.getSource()));
+                }
+                disk.setBoot(dsk.isBoot());
+                if(dsk.getSize() != null) {
+                    disk.setSize(dsk.getSize());
+                }
+                machine.addDisk(disk);
+            });
+
+            mchn.getSshKeys().forEach(key -> {
+                machine.addSshKey(new SshKey(key.getUsername(), key.getType() + " " + key.getKey()));
+            });
+
+            this.components.add(machine);
+            this.nodes.add(machine);
+        });
+
+        map.getDnsZones().forEach(zone -> {
+            zone.getRecords().forEach(record -> {
+                DomainName domainName = new DomainName();
+                this.components.add(domainName);
+                domainName.setProject(this.project);
+                domainName.setZone(zone.getName());
+                domainName.setTtl(record.getTtl());
+                domainName.setType(record.getType());
+                domainName.setMachine((Machine) instance(record.getMachine()));
+                domainName.setName(record.getName());
+
+            });
+        });
     }
 
     public List<Machine> instances() {
         return nodes;
-    }
-
-    public Deployment getDeployment() {
-        return this.deployment;
     }
 
     @Override
@@ -283,11 +143,7 @@ public class GceCluster implements Cluster {
             return node.getTags().contains(label);
         }).findFirst();
 
-        if(item.isPresent()) {
-            return item.get();
-        } else {
-            return null;
-        }
+        return item.orElse(null);
     }
 
     @Override
@@ -295,10 +151,6 @@ public class GceCluster implements Cluster {
         return this.nodes.stream().filter(node -> {
             return node.getTags().contains(label);
         }).collect(Collectors.toList());
-    }
-
-    public void setClient(GceClient client) {
-        this.client = client;
     }
 
     @Override

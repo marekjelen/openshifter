@@ -24,19 +24,15 @@ openshift_release=${deployment.release}
 deployment_type=openshift-enterprise
 </#if>
 
-<#if deployment.components.cockpit>
-osm_use_cockpit=True
-</#if>
-
-<#if deployment.components.metrics>
+<#if deployment.components.metrics??>
 openshift_hosted_metrics_deploy=True
 </#if>
 
-<#if deployment.components.logging>
+<#if deployment.components.logging??>
 openshift_hosted_logging_deploy=True
 </#if>
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
 
-openshift_public_hostname=console.${deployment.name}.${deployment.domain}
-openshift_master_default_subdomain=apps.${deployment.name}.${deployment.domain}
+openshift_public_hostname=console.${deployment.name}.${deployment.dns.suffix}
+openshift_master_default_subdomain=apps.${deployment.name}.${deployment.dns.suffix}

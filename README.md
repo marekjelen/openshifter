@@ -27,25 +27,42 @@ The file name will be the prefix of the DNS name for your cluster.
 Sample definition file might look like
 
 ```yaml
-name: <file base name>        # optional, override the name of the cluster
+name: <base file name>        # optional, override the name of the cluster
 provider: <provider id>       # required, your provider of choice
-domain: <domain name>         # required, domain name suffix
 type: origin                  # optional, OpenShift version - origin or ocp
 release: v1.4.0               # optional, OpenShift version to install, https://hub.docker.com/r/openshift/origin/tags/
 installer: ansible            # optional, installer to use to install Openshift - ansible, ocu
+
+dns:
+  zone: <zone name>           # optional, zone name to configure
+  suffix: nip.io              # optional, domain name suffix
 
 ssh:
   keys:
     - <ssh public key>        # required, public part of the key pair without comment
 
 nodes:
+  zone: <zone to use>         # required, zone to use
+  region: <region to use>     # optional, region to use, if not set, is calculated or not required by provider
+  type: <node type>           # optional, node type, specific per provider, e.g. n1-standard-1 in GCE
+  
   count: 0                    # optional, 0 nodes and infra set to false is all in one deployment
   infra: false                # optional, should be infra node split from master
+  
+  disks:                      # optional, disk configuration, by default root and docker disks 
+    - size: 100               # optional, number of GB
+      boot: true              # optional, is the disk boot device, has to be first if true
+      type: ssd               # optional, disk type, ssd or hdd
+    - size: 100               
+      boot: false              
+      type: ssd               
 
-disks:
-  root: 100                   # optional, number of GB for root disk
-  docker: 100                 # optional, number of GB for docker disk
-  pvs: 100                    # optional, number of GB for PersistentVolumes
+  nodes:                      # optional, configure nodes per type
+    infra:                    # optional, configure infra nodes
+      disks:                  # optional, by default infra node gets one more disk when PVs are enabled
+        - size: 100
+          boot: false
+          type: ssd
 
 components:                   # optional, components to setup on the cluster
   pvs: false                  # optional, PersistentVolumes
@@ -114,13 +131,17 @@ Update your definition file
 ```yaml
 provider: gce                 # Use GCE as provider
 
-gce:                          # required, configure GCE provider
-  project: <project id>       # required, ID of the project to use
-  account: <the JSON file>    # required, name of the JSON file with account credentials
-  dns: <zone name>            # required, zone name to use in Cloud DNS  
+dns:
+  zone: <zone name>           # optional, zone name to use in Cloud DNS 
+
+nodes:
+  type: n1-standard-1         # optional, machine type to use
   zone: us-west1-a            # optional, zone to use
   region: us-west1            # optional, region to use, if not set, is calculated by stripping last segment from zone
-  machine: n1-standard-1      # optional, machine type to use
+
+gce:                          # required, configure GCE provider
+  project: <project id>       # required, ID of the project to use
+  account: <the JSON file>    # required, name of the JSON file with account credentials 
 ```
 
 ### Linode [linode]
@@ -132,11 +153,12 @@ Update your definition file
 ```yaml
 provider: linode              # required, Use Linode as provider
 
+nodes:
+  type: 8192                  # optional, Memory size (2048, 4096, 8192, 12288, 24576, 49152, 65536, 81920, 122880)
+  region: dallas              # optional, Datacenter (dallas, fremont, atlanta, newark, london, tokyo, singapore, frankfurt, shinagawa1)
+  
 linode:                       # required, Configure Linode provider
-  key: <linode key>           # required, Linode API kay
-  datacenter: dallas          # optional, Datacenter (dallas, fremont, atlanta, newark, london, tokyo, singapore, frankfurt, shinagawa1)
-  plan: 8192                  # optional, Memory size (2048, 4096, 8192, 12288, 24576, 49152, 65536, 81920, 122880)
-
+  key: <linode key>           # required, Linode API kay                 
 ```
 
 ## Installers

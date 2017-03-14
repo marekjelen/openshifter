@@ -3,6 +3,7 @@ package eu.mjelen.openshifter.provider.linode;
 import eu.mjelen.openshifter.api.Deployment;
 import eu.mjelen.warden.api.cluster.Cluster;
 import eu.mjelen.warden.api.cluster.Instance;
+import eu.mjelen.warden.api.cluster.map.ClusterMap;
 import synapticloop.linode.LinodeApi;
 
 import java.util.*;
@@ -16,7 +17,7 @@ public class LinodeCluster implements Cluster {
     private Map<String, List<LinodeInstance>> instances = new HashMap<>();
     private List<LinodeInstance> allInstances = new LinkedList<>();
 
-    public LinodeCluster(Deployment deployment) {
+    public LinodeCluster(ClusterMap map, Deployment deployment) {
         this.deployment = deployment;
     }
 

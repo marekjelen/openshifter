@@ -1,0 +1,11 @@
+provider: gce
+domain: <domain name>
+installer: ocu
+type: ocp
+release: v3.4.0.39
+ssh:
+  keys:
+    - <ssh key>
+
+gce:
+  <gce config>

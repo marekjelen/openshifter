@@ -1,0 +1,11 @@
+provider: gce
+domain: <domain name>
+installer: ocu
+type: origin
+release: v1.4.0
+ssh:
+  keys:
+    - <ssh key>
+
+gce:
+  <gce config>

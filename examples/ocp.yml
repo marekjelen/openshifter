@@ -1,0 +1,15 @@
+provider: gce
+domain: <domain>
+type: ocp
+release: v3.4.0
+ssh:
+  keys:
+    - <key>
+
+users:
+  admin:
+    username: admin
+    password: <passwowrd>
+
+gce:
+  <gce config>

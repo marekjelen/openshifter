@@ -34,9 +34,17 @@ data "aws_ami" "rhel7_2" {
   }
 }
 
+//  Use existing SSH keypair
+resource "aws_key_pair" "keypair" {
+  key_name   = "${var.key_name}"
+  public_key = "${file(var.public_key_path)}"
+}
+
 resource "aws_instance" "node" {
   ami                  = "${data.aws_ami.rhel7_2.id}"
   instance_type        = "${var.machine}"
+
+  key_name = "${aws_key_pair.keypair.key_name}"
 
   tags {
     Name    = "OpenShift Node"

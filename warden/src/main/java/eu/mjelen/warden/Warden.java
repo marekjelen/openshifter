@@ -81,7 +81,7 @@ public class Warden<A extends Descriptor> {
         this.logger.debug("Generating plan for provider");
 
         this.cluster = this.getProvider(this.descriptor.getProvider()).analyze(this.descriptor);
-        if(this.cluster == null) throw new NullPointerException("Cluster map can not be null");
+        // if(this.cluster == null) throw new NullPointerException("Cluster map can not be null");
 
         this.cluster.validate();
     }

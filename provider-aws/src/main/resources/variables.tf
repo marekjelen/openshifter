@@ -18,6 +18,12 @@ variable "machine" {
   default = "t2.large"
 }
 
+// Number of worker nodes
+variable "workernodes" {
+  description = "Number of worker nodes to deploy"
+  default = "NUM_WORKER_NODES"
+}
+
 // SSH key name
 variable "key_name" {
   description = "The name of the key to user for ssh access, e.g: os-cluster"

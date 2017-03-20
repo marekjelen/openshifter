@@ -48,26 +48,26 @@ public class Main {
 
         this.warden.validateCluster();
 
-        if("create".equals(this.arguments.getAction())) {
-            if(!this.arguments.hasFlag("skip_infrastructure")) {
-                this.warden.buildCluster();
-            }
-
-            // this.warden.setContextBuilder(context -> {
-            //     context.setInjection(Arguments.class, this.arguments);
-            //     context.setInjection(Templates.class, new Templates() {
-            //     });
-            // });
-
-            this.warden.execute();
-        }
-        
-        if("destroy".equals(this.arguments.getAction())) {
-            if(!this.arguments.hasFlag("skip_infrastructure")) {
-                this.warden.destroyCluster();
-            }
-        }
+        // if("create".equals(this.arguments.getAction())) {
+        //     if(!this.arguments.hasFlag("skip_infrastructure")) {
+        //         this.warden.buildCluster();
+        //     }
         //
+        //     this.warden.setContextBuilder(context -> {
+        //         context.setInjection(Arguments.class, this.arguments);
+        //         context.setInjection(Templates.class, new Templates() {
+        //         });
+        //     });
+        //
+        //     this.warden.execute();
+        // }
+
+        // if("destroy".equals(this.arguments.getAction())) {
+        //     if(!this.arguments.hasFlag("skip_infrastructure")) {
+        //         this.warden.destroyCluster();
+        //     }
+        // }
+
         // if("cleanup".equals(this.arguments.getAction())) {
         //     List<Connection> connections = new SshConnections(this.warden.getCluster()).getConnections("all");
         //

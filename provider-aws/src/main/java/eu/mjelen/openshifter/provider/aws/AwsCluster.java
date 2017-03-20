@@ -52,33 +52,47 @@ public class AwsCluster implements Cluster {
       int exitCode = 0;
 
       this.logger.info("terraform plan");
-
       try {
-        ProcessBuilder builder = new ProcessBuilder();
-        // this needs to go in a relative sub-dir to data and copied in the Docker file:
-        builder.directory(new File("../../provider-aws/"));
-        builder.command("/usr/local/bin/terraform", "plan");
-
-        Process process = builder.start();
-
-        br = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line = null;
-        while ((line = br.readLine()) != null) {
-            sb.append(line + System.getProperty("line.separator"));
+        BufferedReader buf = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("/variables.tf")));
+        String line = buf.readLine();
+        while(line != null){
+          sb.append(line).append("\n");
+          line = buf.readLine();
         }
-        this.logger.info(sb.toString());
-        exitCode = process.waitFor();
-        br.close();
-      } catch (IOException ioignore) {
-          this.logger.error("Problem: " + ioignore);
-      }
-        catch (InterruptedException ieignore) {
-          this.logger.error("Problem: " + ieignore);
-      }
-      if(exitCode > 0) {
-        this.logger.error("There was a problem with the Terraform plan, check credentials.");
-        System.exit(1);
-      }
+        String varTF = sb.toString();
+        this.logger.info("node count: " + Long.toString(this.deployment.getNodes().getCount()));
+        varTF = varTF.replaceAll("NUM_WORKER_NODES", Long.toString(this.deployment.getNodes().getCount()));
+        System.out.println(varTF);
+      } catch (IOException ioe) {
+           this.logger.error("Problem: " + ioe);
+     }
+
+      // try {
+      //   ProcessBuilder builder = new ProcessBuilder();
+      //   // this needs to go in a relative sub-dir to data and copied in the Docker file:
+      //   builder.directory(new File("../../provider-aws/"));
+      //   builder.command("/usr/local/bin/terraform", "plan");
+      //
+      //   Process process = builder.start();
+      //
+      //   br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+      //   String line = null;
+      //   while ((line = br.readLine()) != null) {
+      //       sb.append(line + System.getProperty("line.separator"));
+      //   }
+      //   this.logger.info(sb.toString());
+      //   exitCode = process.waitFor();
+      //   br.close();
+      // } catch (IOException ioignore) {
+      //     this.logger.error("Problem: " + ioignore);
+      // }
+      //   catch (InterruptedException ieignore) {
+      //     this.logger.error("Problem: " + ieignore);
+      // }
+      // if(exitCode > 0) {
+      //   this.logger.error("There was a problem with the Terraform plan, check credentials.");
+      //   System.exit(1);
+      // }
 
     }
 

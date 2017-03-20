@@ -44,43 +44,43 @@ public class Main {
             this.warden.getDescriptor().setName(this.arguments.getName());
         }
 
-        ClusterMap clusterMap = new ClusterMapBuilder(this.warden.getDescriptor()).build();
+        // ClusterMap clusterMap = new ClusterMapBuilder(this.warden.getDescriptor()).build();
 
-        this.warden.validateCluster(clusterMap);
+        this.warden.validateCluster();
 
-        if("create".equals(this.arguments.getAction())) {
-            if(!this.arguments.hasFlag("skip_infrastructure")) {
-                this.warden.buildCluster();
-            }
-
-            this.warden.setContextBuilder(context -> {
-                context.setInjection(Arguments.class, this.arguments);
-                context.setInjection(Templates.class, new Templates() {
-                });
-            });
-
-            this.warden.execute();
-        }
-
-        if("destroy".equals(this.arguments.getAction())) {
-            if(!this.arguments.hasFlag("skip_infrastructure")) {
-                this.warden.destroyCluster();
-            }
-        }
-
-        if("cleanup".equals(this.arguments.getAction())) {
-            List<Connection> connections = new SshConnections(this.warden.getCluster()).getConnections("all");
-
-            connections.forEach(connection -> {
-                connection.connect("root");
-            });
-
-            connections.forEach(connection -> {
-                ExecResult result;
-                result = connection.exec("docker rm $(docker ps -q -f status=exited)");
-                result = connection.exec("docker rmi $(docker images -q -f 'dangling=true')");
-            });
-        }
+        // if("create".equals(this.arguments.getAction())) {
+        //     if(!this.arguments.hasFlag("skip_infrastructure")) {
+        //         this.warden.buildCluster();
+        //     }
+        //
+        //     this.warden.setContextBuilder(context -> {
+        //         context.setInjection(Arguments.class, this.arguments);
+        //         context.setInjection(Templates.class, new Templates() {
+        //         });
+        //     });
+        //
+        //     this.warden.execute();
+        // }
+        //
+        // if("destroy".equals(this.arguments.getAction())) {
+        //     if(!this.arguments.hasFlag("skip_infrastructure")) {
+        //         this.warden.destroyCluster();
+        //     }
+        // }
+        //
+        // if("cleanup".equals(this.arguments.getAction())) {
+        //     List<Connection> connections = new SshConnections(this.warden.getCluster()).getConnections("all");
+        //
+        //     connections.forEach(connection -> {
+        //         connection.connect("root");
+        //     });
+        //
+        //     connections.forEach(connection -> {
+        //         ExecResult result;
+        //         result = connection.exec("docker rm $(docker ps -q -f status=exited)");
+        //         result = connection.exec("docker rmi $(docker images -q -f 'dangling=true')");
+        //     });
+        // }
 
         System.exit(0);
     }

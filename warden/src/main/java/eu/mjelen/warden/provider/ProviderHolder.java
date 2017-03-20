@@ -49,7 +49,7 @@ public class ProviderHolder<A> implements ClusterProvider<A> {
     }
 
     @Override
-    public Cluster analyze(ClusterMap map, A descriptor) {
-        return this.provider.analyze(map, descriptor);
+    public Cluster analyze(A descriptor) {
+        return this.provider.analyze(descriptor);
     }
 }

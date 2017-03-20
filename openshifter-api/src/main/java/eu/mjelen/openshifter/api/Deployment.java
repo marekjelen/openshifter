@@ -26,6 +26,7 @@ public class Deployment implements Descriptor {
     private Users users = new Users();
 
     private GCE gce;
+    private AWS aws;
     private Linode linode;
     private Byo byo;
 
@@ -157,6 +158,15 @@ public class Deployment implements Descriptor {
     public void setGce(GCE gce) {
         this.gce = gce;
     }
+
+    public AWS getAws() {
+        return aws;
+    }
+
+    public void setAws(AWS aws) {
+        this.aws = aws;
+    }
+
 
     public Linode getLinode() {
         return linode;

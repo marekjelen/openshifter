@@ -16,12 +16,7 @@
         <module>openshifter-api</module>
         <module>openshifter</module>
 
-        <module>provider-gce</module>
         <module>provider-aws</module>
-        <module>provider-azure</module>
-        <module>provider-digitalocean</module>
-        <module>provider-linode</module>
-        <module>provider-byo</module>
 
         <module>openshifter-cli</module>
 

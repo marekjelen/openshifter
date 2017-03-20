@@ -12,6 +12,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,45 +47,105 @@ public class AwsCluster implements Cluster {
 
     @Override
     public void validate() {
+      StringBuilder sb = new StringBuilder();
+      BufferedReader br = null;
+      int exitCode = 0;
+
       this.logger.info("terraform plan");
+
+      try {
+        ProcessBuilder builder = new ProcessBuilder();
+        // this needs to go in a relative sub-dir to data and copied in the Docker file:
+        builder.directory(new File("../../provider-aws/"));
+        builder.command("/usr/local/bin/terraform", "plan");
+
+        Process process = builder.start();
+
+        br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String line = null;
+        while ((line = br.readLine()) != null) {
+            sb.append(line + System.getProperty("line.separator"));
+        }
+        this.logger.info(sb.toString());
+        exitCode = process.waitFor();
+        br.close();
+      } catch (IOException ioignore) {
+          this.logger.error("Problem: " + ioignore);
+      }
+        catch (InterruptedException ieignore) {
+          this.logger.error("Problem: " + ieignore);
+      }
+      if(exitCode > 0) {
+        this.logger.error("There was a problem with the Terraform plan, check credentials.");
+        System.exit(1);
+      }
+
     }
 
     @Override
     public void create() {
-        // Map<String, Object> context = new HashMap<>();
-        // context.put("deployment", this.deployment);
-        //
-        // FileWriter writer = null;
-        // try {
-        //     writer = new FileWriter(new File(this.deployment.getName() + ".gce" + ".yml"));
-        //     writer.write(this.templates.template("gce.yml", context));
-        //     writer.close();
-        // } catch (IOException e) {
-        //     e.printStackTrace();
-        // }
-        //
-        // ConfigFile config = new ConfigFile();
-        // config.setContent(this.templates.template("gce.yml", context));
-        //
-        // TargetConfiguration target = new TargetConfiguration();
-        // target.setConfig(config);
-        //
-        // com.google.api.services.deploymentmanager.model.Deployment d = new com.google.api.services.deploymentmanager.model.Deployment();
-        // d.setName(this.deployment.getName());
-        // d.setTarget(target);
-        //
-        // try {
-        //     Operation o = this.client.getDeployment().deployments().insert(this.deployment.getGce().getProject(), d).execute();
-        //     System.out.println(o.getHttpErrorMessage());
-        // } catch (IOException e) {
-        //     e.printStackTrace();
-        // }
+      StringBuilder sb = new StringBuilder();
+      BufferedReader br = null;
+      int exitCode = 0;
 
-        System.exit(0);
+      this.logger.info("terraform apply");
+
+      try {
+        ProcessBuilder builder = new ProcessBuilder();
+        // this needs to go in a relative sub-dir to data and copied in the Docker file:
+        builder.directory(new File("../../provider-aws/"));
+        builder.command("/usr/local/bin/terraform", "apply");
+
+        Process process = builder.start();
+
+        br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String line = null;
+        while ((line = br.readLine()) != null) {
+            sb.append(line + System.getProperty("line.separator"));
+        }
+        this.logger.info(sb.toString());
+        exitCode = process.waitFor();
+        br.close();
+      } catch (IOException ioignore) {
+          this.logger.error("Problem: " + ioignore);
+      }
+        catch (InterruptedException ieignore) {
+          this.logger.error("Problem: " + ieignore);
+      }
+      System.exit(0);
     }
 
     @Override
     public void destroy() {
+      StringBuilder sb = new StringBuilder();
+      BufferedReader br = null;
+      int exitCode = 0;
+
+      this.logger.info("terraform destroy");
+
+      try {
+        ProcessBuilder builder = new ProcessBuilder();
+        // this needs to go in a relative sub-dir to data and copied in the Docker file:
+        builder.directory(new File("../../provider-aws/"));
+        builder.command("/usr/local/bin/terraform", "destroy", "-force");
+
+        Process process = builder.start();
+
+        br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String line = null;
+        while ((line = br.readLine()) != null) {
+            sb.append(line + System.getProperty("line.separator"));
+        }
+        this.logger.info(sb.toString());
+        exitCode = process.waitFor();
+        br.close();
+      } catch (IOException ioignore) {
+          this.logger.error("Problem: " + ioignore);
+      }
+        catch (InterruptedException ieignore) {
+          this.logger.error("Problem: " + ieignore);
+      }
+      System.exit(0);
 
     }
 

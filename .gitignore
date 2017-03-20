@@ -4,3 +4,4 @@ target
 wd
 out
 openshifter.jar
+*.tfstate

@@ -5,3 +5,4 @@ wd
 out
 openshifter.jar
 *.tfstate
+*.tfstate.backup

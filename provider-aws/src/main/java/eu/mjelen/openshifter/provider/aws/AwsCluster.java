@@ -57,11 +57,13 @@ public class AwsCluster implements Cluster {
     @Override
     public void create() {
       this.logger.info("terraform apply");
+      this.tf.execTemplate("apply");
     }
 
     @Override
     public void destroy() {
       this.logger.info("terraform destroy");
+      this.tf.execTemplate("destroy");
     }
 
 }

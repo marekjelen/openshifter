@@ -45,11 +45,11 @@ nodes:
   zone: <zone to use>         # required, zone to use
   region: <region to use>     # optional, region to use, if not set, is calculated or not required by provider
   type: <node type>           # optional, node type, specific per provider, e.g. n1-standard-1 in GCE
-  
+
   count: 0                    # optional, 0 nodes and infra set to false is all in one deployment
   infra: false                # optional, should be infra node split from master
-  
-  disks:                      # optional, disk configuration, by default root and docker disks 
+
+  disks:                      # optional, disk configuration, by default root and docker disks
     - size: 100               # optional, number of GB
       boot: true              # optional, is the disk boot device, has to be first if true
       type: ssd               # optional, disk type, ssd or hdd
@@ -110,6 +110,27 @@ pvs:                          # required if PersistentVolumes components is enab
 
 ## Providers
 
+### AWS [aws]
+
+Update your definition file:
+
+```yaml
+provider: aws                 # Use AWS as provider
+
+dns:
+  suffix: <zone name>         # optional, DNS suffix to use
+
+nodes:
+  count: 2                     # optional, default to 0 worker nodes 
+  type: m3.medium              # optional, machine type to use, defaults to t2.large
+  zone: us-west-1a             # optional, zone to use, defaults to us-west-1a
+  region: us-west-1            # optional, region to use, if not set, is calculated from zone
+
+aws:                               # required, configure AWS provider
+  key: <AWS_ACCESS_KEY_ID>         # required, the content of AWS_ACCESS_KEY_ID
+  secret: <AWS_SECRET_ACCESS_KEY>  # required, the content of AWS_SECRET_ACCESS_KEY
+```
+
 ### Google Compute Engine [gce]
 
 Currently most stable and useful for normal installation and for `oc cluster up`.
@@ -132,7 +153,7 @@ Update your definition file
 provider: gce                 # Use GCE as provider
 
 dns:
-  zone: <zone name>           # optional, zone name to use in Cloud DNS 
+  zone: <zone name>           # optional, zone name to use in Cloud DNS
 
 nodes:
   type: n1-standard-1         # optional, machine type to use
@@ -141,7 +162,7 @@ nodes:
 
 gce:                          # required, configure GCE provider
   project: <project id>       # required, ID of the project to use
-  account: <the JSON file>    # required, name of the JSON file with account credentials 
+  account: <the JSON file>    # required, name of the JSON file with account credentials
 ```
 
 ### Linode [linode]
@@ -156,7 +177,7 @@ provider: linode              # required, Use Linode as provider
 nodes:
   type: 8192                  # optional, Memory size (2048, 4096, 8192, 12288, 24576, 49152, 65536, 81920, 122880)
   region: dallas              # optional, Datacenter (dallas, fremont, atlanta, newark, london, tokyo, singapore, frankfurt, shinagawa1)
-  
+
 linode:                       # required, Configure Linode provider
   key: <linode key>           # required, Linode API kay                 
 ```

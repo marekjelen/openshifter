@@ -9,6 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,9 +50,27 @@ public class Terraformer {
         String varTF = sb.toString();
 
         // replace values from deployment:
-        this.logger.info("node count: " + Long.toString(this.deployment.getNodes().getCount()));
-        varTF = varTF.replaceAll("NUM_WORKER_NODES", Long.toString(this.deployment.getNodes().getCount()));
-        this.logger.info(varTF);
+        if(this.deployment.getNodes().getCount() != null){
+          varTF = varTF.replaceAll("NUM_WORKER_NODES", Long.toString(this.deployment.getNodes().getCount()));
+        } else {
+            varTF = varTF.replaceAll("NUM_WORKER_NODES", Long.toString(this.deployment.getAws().getCount()));
+        }
+        if(this.deployment.getNodes().getType() != null){
+          varTF = varTF.replaceAll("MACHINE_TYPE", this.deployment.getNodes().getType());
+        } else {
+          varTF = varTF.replaceAll("MACHINE_TYPE", this.deployment.getAws().getType());
+        }
+        if(this.deployment.getNodes().getZone() != null){
+          varTF = varTF.replaceAll("AWS_ZONE", this.deployment.getNodes().getZone());
+          this.deployment.getAws().setZone(this.deployment.getNodes().getZone());
+        } else {
+          varTF = varTF.replaceAll("AWS_ZONE", this.deployment.getAws().getZone());
+        }
+        if(this.deployment.getNodes().getRegion() != null){
+          varTF = varTF.replaceAll("AWS_REGION", this.deployment.getNodes().getRegion());
+        } else {
+          varTF = varTF.replaceAll("AWS_REGION", this.deployment.getAws().getRegion());
+        }
 
         // write out the resulting TF variable file into data directory
         BufferedWriter out = new BufferedWriter(new FileWriter("templates/variables.tf"));
@@ -95,8 +114,21 @@ public class Terraformer {
         StringBuilder sb = new StringBuilder();
         BufferedReader buf = null;
         builder.directory(new File("templates/"));
-        builder.command("terraform", mode);
-        // builder.command("/usr/local/bin/terraform", "destroy", "-force");
+
+        Map<String, String> env = builder.environment();
+        env.put("AWS_ACCESS_KEY_ID", this.deployment.getAws().getKey());
+        env.put("AWS_SECRET_ACCESS_KEY", this.deployment.getAws().getSecret());
+
+        if("plan".equals(mode)) {
+          builder.command("terraform", "plan");
+        }
+        if("apply".equals(mode)) {
+          builder.command("terraform", "apply");
+        }
+        if("destroy".equals(mode)) {
+          builder.command("terraform", "destroy", "-force");
+        }
+
         Process process = builder.start();
 
         buf = new BufferedReader(new InputStreamReader(process.getInputStream()));

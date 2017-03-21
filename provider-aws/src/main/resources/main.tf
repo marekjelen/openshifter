@@ -43,6 +43,7 @@ resource "aws_key_pair" "keypair" {
 resource "aws_instance" "node" {
   ami                  = "${data.aws_ami.rhel7_2.id}"
   instance_type        = "${var.machine}"
+  count                = "${var.workernodes}"
   subnet_id            = "${aws_subnet.public-subnet.id}"
   key_name = "${aws_key_pair.keypair.key_name}"
 

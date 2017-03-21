@@ -17,17 +17,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AwsCluster implements Cluster {
 
     private final Deployment deployment;
+    private final Terraformer tf;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public AwsCluster(Deployment deployment) {
         this.deployment = deployment;
+        this.tf = new Terraformer(deployment);
     }
 
     @Override
@@ -47,25 +48,10 @@ public class AwsCluster implements Cluster {
 
     @Override
     public void validate() {
-      StringBuilder sb = new StringBuilder();
-      BufferedReader br = null;
-      int exitCode = 0;
 
-      this.logger.info("terraform plan");
-      try {
-        BufferedReader buf = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("/variables.tf")));
-        String line = buf.readLine();
-        while(line != null){
-          sb.append(line).append("\n");
-          line = buf.readLine();
-        }
-        String varTF = sb.toString();
-        this.logger.info("node count: " + Long.toString(this.deployment.getNodes().getCount()));
-        varTF = varTF.replaceAll("NUM_WORKER_NODES", Long.toString(this.deployment.getNodes().getCount()));
-        System.out.println(varTF);
-      } catch (IOException ioe) {
-           this.logger.error("Problem: " + ioe);
-     }
+      if(!this.tf.initTemplate()) {
+        System.exit(1);
+      }
 
       // try {
       //   ProcessBuilder builder = new ProcessBuilder();

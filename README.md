@@ -175,3 +175,24 @@ When this installer is configured, it will use __oc cluster up__ to do the insta
  ```
  docker run -ti -v ~/deployer:/root/data:Z registry.gitlab.com/osevg/openshifter create cluster01.yml
  ```
+
+## Developer information
+
+If would like to create the container image associated with this project there
+are a few prerequisite steps that must be followed beforehand:
+
+1. ensure that the [Maven](https://maven.apache.org/) build tool is
+   installed on your system
+
+1. run the following command to build the project locally:
+
+   `mvn -P release clean package`
+
+1. when that is finished you will have built the necessary Java JAR files and
+   the project is ready to constructed into a container with the following
+   command:
+
+   `docker build -t openshifter .`
+
+You will now have an image named `openshifter` in your docker registry, ready
+for deployment as described in the previous sections.
